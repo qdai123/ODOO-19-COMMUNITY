@@ -1,46 +1,72 @@
 # Odoo 19 Core Mirror
 
-This repository wraps the official Odoo 19.0 source code so it can be consumed as a standalone dependency inside MOVEOPlus projects.
+This repository wraps the official Odoo 19.0 source code so it can be reused as a standalone dependency inside MOVEOPlus projects and deployed with a single provisioning script.
 
 ## Repository Source
 
 - Upstream repository: <https://github.com/odoo/odoo> (branch `19.0`)
 - Managed here as the `source` git submodule
-- Current pinned commit: `6e5146113adbdce3cbe317a7b3ef16be0a244b6a`
+- Current pinned commit: `e70edef8d0f5a0a588a9b0b0d306dba0f90c9d73`
 
-## Getting Started
+Update to newer Odoo releases by checking out the desired commit inside `source/` and committing the new submodule pointer in this repository.
 
-```bash
-git clone git@github.com:phatdangminh/odoo19.git
-cd odoo19
-git submodule update --init --recursive
-```
+## Requirements
 
-The upstream code lives under the `source/` directory. Update to newer Odoo releases by pulling the desired commit inside `source` and committing the submodule pointer in this repository.
+- Ubuntu 22.04 / 24.04 LTS or Debian 12
+- Root privileges (`sudo`) on the target machine
+- Internet access to fetch Debian/Ubuntu packages, PostgreSQL, wkhtmltopdf, and this mirror
 
-## Provisioning Script
+## Using the Installer
 
-Use the bundled `odoo_install.sh` to bootstrap an Odoo 19 instance on Ubuntu 22.04/24.04 or Debian 12 servers. The script:
+`odoo_install.sh` provisions a fully configured Odoo 19 service. It installs system dependencies, PostgreSQL (16 by default), wkhtmltopdf, Node/rtlcss, an isolated Python virtual environment, configuration files, log directories, and a systemd unit. Optional switches enable enterprise extras, Nginx reverse proxying, and HTTPS via Certbot.
 
-- Installs PostgreSQL 16 (or distro default), wkhtmltopdf, Node/rtlcss, and core build tools.
-- Clones this mirror plus the `source/` submodule under `/odoo/odoo-19`.
-- Sets up a Python virtual environment, Odoo config in `/etc/odoo-server.conf`, log directory, and a systemd unit.
-- Optionally enables enterprise extras, Nginx reverse proxying, and certbot-based HTTPS.
-
-### Usage
+### Quick start
 
 ```bash
+git clone https://github.com/qdai123/ODOO-19-COMMUNITY.git
+cd ODOO-19-COMMUNITY
 chmod +x odoo_install.sh
 sudo ./odoo_install.sh
 ```
 
-Override defaults by exporting environment variables before running, for example:
+Re-run the script at any time to pull the latest mirror commits, refresh submodules, update dependencies, or regenerate the service configuration.
 
-```bash
-export INSTALL_NGINX=True
-export WEBSITE_NAME=moveoplus.com
-export ADMIN_EMAIL=info@moveoplus.com
-sudo ./odoo_install.sh
-```
+### Configuration toggles
 
-Review the script header for the full list of tunable variables (e.g., `OE_PORT`, `INSTALL_POSTGRESQL_SIXTEEN`, `IS_ENTERPRISE`).
+Control installer behaviour by exporting environment variables before invoking the script:
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `OE_USER` | `odoo` | System account that owns the Odoo files and service. |
+| `OE_HOME_EXT` | `/odoo/odoo-19` | Destination path for the mirror checkout. |
+| `OE_SERVICE_NAME` | `odoo19` | Name of the created systemd unit. |
+| `OE_PORT` | `8069` | HTTP port exposed by Odoo. |
+| `LONGPOLLING_PORT` | `8072` | Port used for Odoo's longpolling workers. |
+| `INSTALL_POSTGRESQL_SIXTEEN` | `True` | Install PostgreSQL 16 from PostgreSQL.org packages instead of the distro version. |
+| `INSTALL_WKHTMLTOPDF` | `True` | Install wkhtmltopdf (required for PDF reports). |
+| `IS_ENTERPRISE` | `False` | Include extra Python dependencies used by Odoo Enterprise. |
+| `INSTALL_NGINX` | `False` | Install and configure an Nginx reverse proxy. Requires `WEBSITE_NAME`. |
+| `ENABLE_SSL` | `False` | Issue HTTPS certificates via Certbot when Nginx is enabled. Requires `ADMIN_EMAIL`. |
+| `CUSTOM_ADDONS_DIR` | `/odoo/odoo-19/custom-addons` | Location for bespoke modules appended to the addons path. |
+| `ODOO_MIRROR_URL` | `https://github.com/qdai123/ODOO-19-COMMUNITY.git` | Alternate Git remote that contains the mirror + submodule. |
+| `ODOO_MIRROR_BRANCH` | `19.0` | Branch in the mirror repository to check out. |
+
+Refer to the script header for the complete list of tunable values, including logging, superadmin password management, and mirror overrides.
+
+### Outputs
+
+The installer reports the final configuration, including:
+
+- Systemd service name and status commands
+- Configuration file path (default `/etc/odoo-server.conf`)
+- Log directory (default `/var/log/odoo`)
+- Code checkout (`/odoo/odoo-19`) and Python virtual environment (`venv`)
+- Generated admin password (when `GENERATE_RANDOM_PASSWORD=True`)
+
+Use `systemctl status odoo19` to verify that the service is running after the script completes.
+
+## Development Notes
+
+- The provisioning script must be run as root. It exits early with a helpful message if executed without sufficient privileges.
+- When `INSTALL_POSTGRESQL_SIXTEEN=True`, the script adds the PostgreSQL APT repository, installs version 16, and enables the service. With the default setting the installer also activates the `pgvector` extension for Enterprise deployments.
+- When re-running the installer on an existing host, it performs an in-place Git fetch/checkout to keep the mirror up to date and reinstalls Python requirements to match the pinned `requirements.txt`.

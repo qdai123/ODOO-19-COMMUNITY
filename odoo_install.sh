@@ -4,7 +4,7 @@
 # MOVEOPlus Odoo 19 installer
 # ---------------------------
 # This script provisions an Odoo 19 environment based on the
-# https://github.com/phatdangminh/odoo19.git mirror (which embeds the upstream
+# https://github.com/qdai123/ODOO-19-COMMUNITY.git mirror (which embeds the upstream
 # Odoo source as a `source/` submodule).
 #
 # Tested on Ubuntu 22.04/24.04 and Debian 12. Run as root or with sudo.
@@ -29,7 +29,7 @@ OE_USER="${OE_USER:-odoo}"
 OE_GROUP="${OE_GROUP:-$OE_USER}"
 OE_HOME="/${OE_USER}"
 OE_HOME_EXT="${OE_HOME}/${OE_USER}-19"
-ODOO_MIRROR_URL="${ODOO_MIRROR_URL:-https://github.com/phatdangminh/odoo19.git}"
+ODOO_MIRROR_URL="${ODOO_MIRROR_URL:-https://github.com/qdai123/ODOO-19-COMMUNITY.git}"
 ODOO_MIRROR_BRANCH="${ODOO_MIRROR_BRANCH:-19.0}"
 ODOO_SOURCE_DIR="${OE_HOME_EXT}/source"
 ODOO_VENV_DIR="${OE_HOME_EXT}/venv"
@@ -252,7 +252,7 @@ create_systemd_service() {
   cat > "/etc/systemd/system/${OE_SERVICE_NAME}.service" <<EOF
 [Unit]
 Description=MOVEOPlus (Odoo 19.0)
-Documentation=https://github.com/phatdangminh/odoo19
+Documentation=https://github.com/qdai123/ODOO-19-COMMUNITY
 After=network.target postgresql.service
 Wants=postgresql.service
 
